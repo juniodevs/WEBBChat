@@ -164,7 +164,7 @@ const handleLogin = (event) => {
     login.style.display = "none";
     chat.style.display = "flex";
 
-    websocket = new WebSocket("ws://webbchat-beckend.onrender.com");
+    websocket = new WebSocket("wss://webbchat-beckend.onrender.com");
     websocket.onmessage = processMessage;
 
     const welcomeMessage = createWelcomeMessage(user.name);
