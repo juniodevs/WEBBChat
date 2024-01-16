@@ -48,6 +48,32 @@ const user = {
 
 let websocket
 
+const getStoredUsername = () => {
+    const storedUsername = localStorage.getItem("chatUsername");
+    return storedUsername ? storedUsername : "";
+};
+
+const getStoredMessages = () => {
+    const storedMessages = localStorage.getItem("chatMessages");
+    return storedMessages ? JSON.parse(storedMessages) : [];
+};
+
+const saveMessagesToStorage = (messages) => {
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
+};
+
+const displayStoredMessages = () => {
+    const storedMessages = getStoredMessages();
+    storedMessages.forEach((message) => {
+        const { userId, userName, userColor, content } = message;
+        const displayedMessage = userId === user.id
+            ? createmessageSelfElement(content)
+            : createmessageOtherElement(content, userName, userColor);
+        chatMessages.appendChild(displayedMessage);
+    });
+    scrollScreen();
+};
+
 const createmessageSelfElement = (content) =>
 {
     const div = document.createElement("div");
@@ -57,6 +83,26 @@ const createmessageSelfElement = (content) =>
 
     return div;
 }
+
+const createWelcomeMessage = (userName) => {
+    const div = document.createElement("div");
+
+    div.classList.add("message--welcome");
+    div.innerHTML = `Olá, <strong>${userName}</strong>!, seja Bem-Vind(o/a/e) ao chat!`;
+
+    // Adiciona estilos para centralizar e estilizar a mensagem de boas-vindas
+    div.style.textAlign = "center";
+    div.style.padding = "10px";
+    div.style.backgroundColor = "#f0f0f0";
+    div.style.color = "#333";
+    div.style.borderRadius = "10px";
+    div.style.margin = "auto";
+    div.style.marginTop = "20px";
+    div.style.maxWidth = "400px";
+
+    return div;
+}
+
 
 const createmessageOtherElement = (content, sender, senderColor) =>
 {
@@ -94,9 +140,8 @@ const processMessage = ({data}) => {
 
     const {userId, userName, userColor, content} = JSON.parse(data);
 
-
     const message = userId == user.id 
-    ? createmessageSelfElement(content) 
+    ? createmessageSelfElement(content)
     : createmessageOtherElement(content, userName, userColor);
 
     chatMessages.appendChild(message);
@@ -109,30 +154,48 @@ const handleLogin = (event) => {
     event.preventDefault();
 
     user.id = crypto.randomUUID();
-    user.name = loginInput.value;
+    user.name = loginInput.value || getStoredUsername(); // Usar o nome armazenado, se disponível
     user.color = getRandomColor();
+
+    // Adicionar evento beforeunload para salvar o nome do usuário no localStorage
+    window.addEventListener("beforeunload", () => {
+        localStorage.setItem("chatUsername", user.name);
+    });
 
     login.style.display = "none";
     chat.style.display = "flex";
 
     websocket = new WebSocket("ws://localhost:8080");
     websocket.onmessage = processMessage;
-}
+
+    const welcomeMessage = createWelcomeMessage(user.name);
+    chatMessages.appendChild(welcomeMessage);
+
+    // Exibir mensagens armazenadas ao fazer login
+    displayStoredMessages();
+};
 
 const sendMessage = (event) => {
     event.preventDefault();
-    
+
     const message = {
         userId: user.id,
         userName: user.name,
         userColor: user.color,
-        content: chatInput.value
-    }
+        content: chatInput.value,
+    };
+
+    // Obter mensagens armazenadas, adicionar a nova mensagem e salvar novamente
+    const storedMessages = getStoredMessages();
+    storedMessages.push(message);
+    saveMessagesToStorage(storedMessages);
 
     websocket.send(JSON.stringify(message));
 
     chatInput.value = "";
-}
+};
+
+
 
 loginForm.addEventListener("submit", handleLogin);
 chatForm.addEventListener("submit", sendMessage);
