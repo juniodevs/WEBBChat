@@ -90,7 +90,6 @@ const createWelcomeMessage = (userName) => {
     div.classList.add("message--welcome");
     div.innerHTML = `Olá, <strong>${userName}</strong>!, seja Bem-Vind(o/a/e) ao chat!`;
 
-    // Adiciona estilos para centralizar e estilizar a mensagem de boas-vindas
     div.style.textAlign = "center";
     div.style.padding = "10px";
     div.style.backgroundColor = "#f0f0f0";
@@ -154,10 +153,10 @@ const handleLogin = (event) => {
     event.preventDefault();
 
     user.id = crypto.randomUUID();
-    user.name = loginInput.value || getStoredUsername(); // Usar o nome armazenado, se disponível
+    user.name = loginInput.value || getStoredUsername(); 
     user.color = getRandomColor();
 
-    // Adicionar evento beforeunload para salvar o nome do usuário no localStorage
+
     window.addEventListener("beforeunload", () => {
         localStorage.setItem("chatUsername", user.name);
     });
@@ -165,13 +164,12 @@ const handleLogin = (event) => {
     login.style.display = "none";
     chat.style.display = "flex";
 
-    websocket = new WebSocket("ws://localhost:8080");
+    websocket = new WebSocket("ws://webbchat-beckend.onrender.com");
     websocket.onmessage = processMessage;
 
     const welcomeMessage = createWelcomeMessage(user.name);
     chatMessages.appendChild(welcomeMessage);
 
-    // Exibir mensagens armazenadas ao fazer login
     displayStoredMessages();
 };
 
@@ -185,7 +183,6 @@ const sendMessage = (event) => {
         content: chatInput.value,
     };
 
-    // Obter mensagens armazenadas, adicionar a nova mensagem e salvar novamente
     const storedMessages = getStoredMessages();
     storedMessages.push(message);
     saveMessagesToStorage(storedMessages);
